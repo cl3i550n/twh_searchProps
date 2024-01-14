@@ -10,13 +10,10 @@ local alreadySearched = {}
 local alreadySearchedProp = {}
 local T = Translation.Langs[Config.Lang]
 
-local function sendNotification(source, message)
-    VORPcore.NotifyRightTip(source, message, 4000)
-end
-
 local function processLoot(source, lootTable)
     local itemString = ""
-    local Character = VORPcore.getUser(source).getUsedCharacter()
+    local User = VORPcore.getUser(source)
+    local Character = User.getUsedCharacter
 
     for _, loot in pairs(lootTable) do
         if math.random() <= loot.chance then
@@ -27,7 +24,8 @@ local function processLoot(source, lootTable)
             else
                 Inventory.addItem(source, loot.item, loot.amount)
             end
-            itemString = itemString .. "\n_Item:_`" .. loot.label .. " x" .. loot.amount .. "`"
+            itemString = loot.label .. " " .. loot.amount
+            break
         end
     end
 
@@ -35,9 +33,10 @@ local function processLoot(source, lootTable)
 end
 
 local function createDiscordMessage(source, itemString)
-    local steamName = GetPlayerName(source)
-    local Identifier = GetPlayerIdentifier(source)
-    local discordId = Config.Discord and string.sub(GetIdentity(source, "discord"), 9) or ""
+    local _source = source
+    local steamName = GetPlayerName(_source)
+    local Identifier = GetPlayerIdentifier(_source)
+    local discordId = Config.Discord and string.sub(GetIdentity(_source, "discord"), 9) or ""
     local message = "**Steam name: **`" .. steamName .. "`**\nIdentifier:**`" .. Identifier
 
     if Config.Discord then
@@ -47,42 +46,44 @@ local function createDiscordMessage(source, itemString)
     return message .. "\n**Items: **" .. itemString
 end
 
-local function handleLootInteraction(searched, model, source)
+local function handleLootInteraction(source, searched, model)
+    local _source = source
     if alreadySearched[searched] then
-        sendNotification(source, T.alreadySearched)
+        sendNotification(_source, T.alreadySearched)
         return
     end
 
-    -- Marca o container como saqueado
     alreadySearched[searched] = true
     local lootConfig = Config.interactionLoot[model] or Config.interactionLoot["default"]
-    local itemString = processLoot(source, lootConfig.loot)
+    local itemString = processLoot(_source, lootConfig.loot)
+
+    print(itemString)
 
     if itemString ~= "" then
-        sendNotification(source, T.found .. itemString)
+        VORPcore.NotifyRightTip(source, T.found .. " " .. itemString, 4000)
         if Config.Discord or Config.Logs then
-            local discordMessage = createDiscordMessage(source, itemString)
-            TriggerEvent("twh_searchProps:webhook", T.getReward, discordMessage)
+            local discordMessage = createDiscordMessage(_source, itemString)
+            TriggerEvent("texas_searchProps:webhook", T.getReward, discordMessage)
         end
     else
-        sendNotification(source, T.nothingFound)
+        VORPcore.NotifyRightTip(source, T.nothingFound, 4000)
     end
 
     Citizen.Wait(1000)
-    alreadySearched[searched] = false
+    alreadySearched[searched] = nil
 end
 
-RegisterServerEvent("twh_searchProps:interactionLoot")
-AddEventHandler("twh_searchProps:interactionLoot", function(searcher, searched, model)
+RegisterServerEvent("texas_searchProps:interactionLoot")
+AddEventHandler("texas_searchProps:interactionLoot", function(searched, model)
     local _source = source
-    handleLootInteraction(searched, model, _source)
+    handleLootInteraction(_source, searched, model)
 end)
 
 local function handlePropLootInteraction(prop, coords, source)
     if alreadySearchedProp[prop] then
         for _, v in pairs(alreadySearchedProp[prop]) do
             if CheckPos(coords.x, coords.y, coords.z, v.x, v.y, v.z, 2) then
-                sendNotification(source, T.alreadySearched)
+                VORPcore.NotifyRightTip(source, T.alreadySearched, 4000)
                 return
             end
         end
@@ -95,24 +96,24 @@ local function handlePropLootInteraction(prop, coords, source)
     local itemString = processLoot(source, lootConfig.loot)
 
     if itemString ~= "" then
-        sendNotification(source, T.found .. itemString)
+        VORPcore.NotifyRightTip(source, T.found .. itemString, 4000)
         if Config.Discord or Config.Logs then
             local discordMessage = createDiscordMessage(source, itemString)
-            TriggerEvent("twh_searchProps:webhook", T.getReward, discordMessage)
+            TriggerEvent("texas_searchProps:webhook", T.getReward, discordMessage)
         end
     else
-        sendNotification(source, T.nothingFound)
+        VORPcore.NotifyRightTip(source, T.nothingFound, 4000)
     end
 end
 
-RegisterServerEvent("twh_searchProps:propLoot")
-AddEventHandler("twh_searchProps:propLoot", function(prop, coords)
+RegisterServerEvent("texas_searchProps:propLoot")
+AddEventHandler("texas_searchProps:propLoot", function(prop, coords)
     local _source = source
     handlePropLootInteraction(prop, coords, _source)
 end)
 
-RegisterServerEvent('twh_searchProps:webhook')
-AddEventHandler('twh_searchProps:webhook', function(title, description, text)
+RegisterServerEvent('texas_searchProps:webhook')
+AddEventHandler('texas_searchProps:webhook', function(title, description, text)
     Discord(Config.webhook, title, description, text, Config.webhookColor)
 end)
 
