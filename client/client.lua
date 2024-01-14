@@ -1,4 +1,5 @@
 local prompts = GetRandomIntInRange(0, 0xffffff)
+local containersInteracting = {}
 local openmenu
 
 local T = Translation.Langs[Config.Lang]
@@ -67,8 +68,13 @@ Citizen.CreateThread(function()
                             local searched = eventDataStruct:GetInt32(8)
                             local isClosedAfter = eventDataStruct:GetInt32(24)
                             local entityModel = GetEntityModel(eventDataStruct:GetInt32(8))
-                            if isClosedAfter == 0 then
+                            if isClosedAfter == 0 and not containersInteracting[searched] then
+                                containersInteracting[searched] = true
                                 TriggerServerEvent("twh_searchProps:interactionLoot", searcher, searched, entityModel)
+
+                                Citizen.SetTimeout(5000, function()
+                                    containersInteracting[searched] = false
+                                end)
                             end
                         end
                     end
