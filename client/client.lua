@@ -1,5 +1,4 @@
 local prompts = GetRandomIntInRange(0, 0xffffff)
-local containersInteracting = {}
 local openmenu
 
 local T = Translation.Langs[Config.Lang]
@@ -35,7 +34,7 @@ Citizen.CreateThread(function()
                     TaskStartScenarioInPlace(PlayerPedId(), GetHashKey(animation), lootTime, true, false, false, false)
                     exports['progressBars']:startUI(lootTime, T.searching)
                     Citizen.Wait(lootTime)
-                    TriggerServerEvent("twh_searchProps:propLoot", v, coords)
+                    TriggerServerEvent("texas_searchProps:propLoot", v, coords)
                 end
             end
         end
@@ -48,6 +47,7 @@ end)
 -----------------------------------------
 ----------Container Interaction----------
 Citizen.CreateThread(function()
+    local ped = PlayerPedId()
     if Config.enableInteraction then
         while true do
             Citizen.Wait(10)
@@ -55,26 +55,21 @@ Citizen.CreateThread(function()
             if size > 0 then
                 for i = 0, size - 1 do
                     local eventAtIndex = GetEventAtIndex(0, i)
-                    if eventAtIndex == GetHashKey("EVENT_CONTAINER_INTERACTION") then -- if eventAtIndex == GetHashKey("EVENT_VEHICLE_CREATED")
-                        local eventDataSize = 4                                       -- for EVENT_VEHICLE_CREATED data size is 1. Check table below.
-                        local eventDataStruct = DataView.ArrayBuffer(40)              -- buffer must be 8*eventDataSize or bigger
-                        eventDataStruct:SetInt32(0, 0)                                -- 8*0 offset for 0 element of eventData
-                        eventDataStruct:SetInt32(8, 0)                                -- 8*1 offset for 1 element of eventData
-                        eventDataStruct:SetInt32(16, 0)                               -- 8*2 offset for 2 element of eventData
+                    if eventAtIndex == GetHashKey("EVENT_CONTAINER_INTERACTION") then                                                  -- if eventAtIndex == GetHashKey("EVENT_VEHICLE_CREATED")
+                        local eventDataSize = 4                                                                                        -- for EVENT_VEHICLE_CREATED data size is 1. Check table below.
+                        local eventDataStruct = DataView.ArrayBuffer(40)                                                               -- buffer must be 8*eventDataSize or bigger
+                        eventDataStruct:SetInt32(0, 0)                                                                                 -- 8*0 offset for 0 element of eventData
+                        eventDataStruct:SetInt32(8, 0)                                                                                 -- 8*1 offset for 1 element of eventData
+                        eventDataStruct:SetInt32(16, 0)                                                                                -- 8*2 offset for 2 element of eventData
                         eventDataStruct:SetInt32(24, 0)
-                        local is_data_exists = Citizen.InvokeNative(0x57EC5FA4D4D6AFCA, 0, i, eventDataStruct:Buffer(), eventDataSize) -- GET_EVENT_DATA
+                        local is_data_exists = Citizen.InvokeNative(0x57EC5FA4D4D6AFCA, 0, i, eventDataStruct:Buffer(), eventDataSize)                                                                                             -- GET_EVENT_DATA
                         if is_data_exists then
-                            local searcher = eventDataStruct:GetInt32(0)
+                            -- local searcher = eventDataStruct:GetInt32(0)
                             local searched = eventDataStruct:GetInt32(8)
                             local isClosedAfter = eventDataStruct:GetInt32(24)
                             local entityModel = GetEntityModel(eventDataStruct:GetInt32(8))
-                            if isClosedAfter == 0 and not containersInteracting[searched] then
-                                containersInteracting[searched] = true
-                                TriggerServerEvent("twh_searchProps:interactionLoot", searcher, searched, entityModel)
-
-                                Citizen.SetTimeout(5000, function()
-                                    containersInteracting[searched] = false
-                                end)
+                            if ped and isClosedAfter == 0 then
+                                TriggerServerEvent("twh_searchProps:interactionLoot", searched, entityModel)
                             end
                         end
                     end
