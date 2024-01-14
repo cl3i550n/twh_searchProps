@@ -63,7 +63,7 @@ local function handleLootInteraction(source, searched, model)
         VORPcore.NotifyRightTip(source, T.found .. " " .. itemString, 4000)
         if Config.Discord or Config.Logs then
             local discordMessage = createDiscordMessage(_source, itemString)
-            TriggerEvent("texas_searchProps:webhook", T.getReward, discordMessage)
+            TriggerEvent("twh_searchProps:webhook", T.getReward, discordMessage)
         end
     else
         VORPcore.NotifyRightTip(source, T.nothingFound, 4000)
@@ -73,8 +73,8 @@ local function handleLootInteraction(source, searched, model)
     alreadySearched[searched] = nil
 end
 
-RegisterServerEvent("texas_searchProps:interactionLoot")
-AddEventHandler("texas_searchProps:interactionLoot", function(searched, model)
+RegisterServerEvent("twh_searchProps:interactionLoot")
+AddEventHandler("twh_searchProps:interactionLoot", function(searched, model)
     local _source = source
     handleLootInteraction(_source, searched, model)
 end)
@@ -99,21 +99,21 @@ local function handlePropLootInteraction(prop, coords, source)
         VORPcore.NotifyRightTip(source, T.found .. itemString, 4000)
         if Config.Discord or Config.Logs then
             local discordMessage = createDiscordMessage(source, itemString)
-            TriggerEvent("texas_searchProps:webhook", T.getReward, discordMessage)
+            TriggerEvent("twh_searchProps:webhook", T.getReward, discordMessage)
         end
     else
         VORPcore.NotifyRightTip(source, T.nothingFound, 4000)
     end
 end
 
-RegisterServerEvent("texas_searchProps:propLoot")
-AddEventHandler("texas_searchProps:propLoot", function(prop, coords)
+RegisterServerEvent("twh_searchProps:propLoot")
+AddEventHandler("twh_searchProps:propLoot", function(prop, coords)
     local _source = source
     handlePropLootInteraction(prop, coords, _source)
 end)
 
-RegisterServerEvent('texas_searchProps:webhook')
-AddEventHandler('texas_searchProps:webhook', function(title, description, text)
+RegisterServerEvent('twh_searchProps:webhook')
+AddEventHandler('twh_searchProps:webhook', function(title, description, text)
     Discord(Config.webhook, title, description, text, Config.webhookColor)
 end)
 
