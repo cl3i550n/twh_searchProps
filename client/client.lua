@@ -64,11 +64,11 @@ Citizen.CreateThread(function()
                         eventDataStruct:SetInt32(24, 0)
                         local is_data_exists = Citizen.InvokeNative(0x57EC5FA4D4D6AFCA, 0, i, eventDataStruct:Buffer(), eventDataSize)                                                                                             -- GET_EVENT_DATA
                         if is_data_exists then
-                            -- local searcher = eventDataStruct:GetInt32(0)
+                            local searcher = eventDataStruct:GetInt32(0)
                             local searched = eventDataStruct:GetInt32(8)
                             local isClosedAfter = eventDataStruct:GetInt32(24)
                             local entityModel = GetEntityModel(eventDataStruct:GetInt32(8))
-                            if ped and isClosedAfter == 0 then
+                            if ped == searcher and isClosedAfter == 0 then
                                 TriggerServerEvent("twh_searchProps:interactionLoot", searched, entityModel)
                             end
                         end
